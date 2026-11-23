@@ -79,217 +79,41 @@
     border-color: #002868;
   }
   main { padding: 1rem; max-width: 900px; margin: 0 auto; }
-  .kanban {
-    display: flex;
-    gap: 0.7rem;
-    overflow-x: auto;
-    padding-bottom: 1rem;
-    min-height: 60vh;
-  }
-  .kanban-col {
-    flex: 0 0 280px;
-    background: #f4f6f9;
-    border: 2px solid #002868;
-    border-radius: 8px;
-    padding: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    max-height: 75vh;
-  }
-  .kanban-col h2 {
-    margin: 0 0 0.5rem;
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: #fff;
-    background: #002868;
-    padding: 0.4rem 0.5rem;
-    border-radius: 4px;
-    text-align: center;
-    letter-spacing: 0.3px;
-  }
-  .kanban-col.open h2 { background: #bf0a30; }
-  .kanban-col.waiting h2 { background: #c17d00; }
-  .kanban-col.progress h2 { background: #002868; }
-  .kanban-col.ready h2 { background: #1a5fbf; }
-  .kanban-cards {
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .kanban-card {
-    background: #fff;
-    border: 2px solid #002868;
-    border-left: 8px solid #bf0a30;
-    border-radius: 6px;
-    padding: 0.6rem 0.65rem;
-    cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,40,104,0.1);
-  }
-  .kanban-card:hover { box-shadow: 0 3px 8px rgba(0,40,104,0.2); }
-  .kanban-card .punch {
-    font-size: 11px;
-    font-weight: 800;
-    color: #bf0a30;
-    margin-bottom: 0.15rem;
-  }
-  .kanban-card h3 { margin: 0; font-size: 1.05rem; font-weight: 800; }
-  .kanban-card .boat { font-size: 13px; font-weight: 600; color: #002868; margin: 0.1rem 0; }
-  .kanban-card .work { font-size: 12.5px; color: #333; }
-  .kanban-card .stats { font-size: 11px; font-weight: 700; color: #002868; margin-top: 0.25rem; }
-    display: flex;
-    gap: 0.6rem;
-    margin-bottom: 0.7rem;
-    flex-wrap: wrap;
-  }
-  .floor-pill {
-    background: #fff;
-    border: 2px solid #002868;
-    border-radius: 6px;
-    padding: 0.4rem 0.7rem;
-    font-weight: 800;
-    font-size: 13px;
-    color: #002868;
-  }
-  .floor-pill strong { color: #bf0a30; }
-  .job-card {
-    background: #ffffff;
-    border: 2px solid #002868;
-    border-left: 10px solid #bf0a30;
-    border-radius: 8px;
-    padding: 0.85rem 0.9rem;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,40,104,0.12);
-    transition: transform 0.12s, box-shadow 0.12s;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  .job-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,40,104,0.22);
-  }
-  .job-card .card-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  .job-card h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    font-weight: 800;
-    line-height: 1.15;
-  }
-  .job-card .boat-line {
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: #002868;
-  }
-  .job-card .work-line {
-    font-size: 13.5px;
-    color: #222;
-    margin: 0.1rem 0;
-  }
-  .job-card .card-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0.35rem;
-    font-size: 12px;
-  }
-  .punch-id {
-    background: #bf0a30;
-    color: #fff;
-    padding: 0.2rem 0.55rem;
-    border-radius: 4px;
-    font-weight: 800;
-    font-size: 12px;
-    letter-spacing: 0.3px;
-  }
-  .job-card.status-Open { border-left-color: var(--open); }
-  .job-card.status-Waiting-Parts { border-left-color: #c17d00; }
-  .job-card.status-Scheduled { border-left-color: #1a5fbf; }
-  .job-card.status-In-Progress { border-left-color: var(--progress); }
-  .job-card.status-Ready { border-left-color: var(--ready); }
-  .job-card.status-Invoiced { border-left-color: var(--invoiced); }
-  .job-card h3, .cust-card h3, .part-card h3 { margin: 0 0 0.2rem; font-size: 1.15rem; font-weight: 800; }
-  .job-card .meta, .cust-card .meta, .part-card .meta { color: var(--muted); font-size: 13px; }
-  .status-badge {
-    display: inline-block;
-    background: #002868;
-    color: #fff;
-    padding: 0.15rem 0.5rem;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-  }
-  .status-badge.open { background: #bf0a30; }
-  .status-badge.waiting-parts { background: #c17d00; }
-  .status-badge.scheduled { background: #1a5fbf; }
-  .status-badge.in-progress { background: #002868; }
-  .status-badge.ready { background: #1a5fbf; }
-  .age-fresh { color: #1a5fbf; font-weight: 700; }
-  .age-warn { color: #c17d00; font-weight: 700; }
-  .age-old { color: #bf0a30; font-weight: 700; }
-  .card-stats {
-    display: flex;
-    gap: 0.8rem;
-    margin: 0.3rem 0 0.15rem;
-    font-size: 12px;
-    font-weight: 600;
-    color: #002868;
-  }
-  .sort-btn.active {
-    background: #002868 !important;
-    color: #fff !important;
-    border-color: #002868 !important;
-    box-shadow: 0 0 0 2px #bf0a30;
-  }
-  .sort-icon {
-    margin-left: 0.2rem;
-    font-weight: 900;
-  }
-  .filter-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    margin-bottom: 0.6rem;
-  }
-  .filter-chips button {
-    background: #fff;
-    color: #002868;
-    border: 2px solid #002868;
-    padding: 0.25rem 0.6rem;
-    border-radius: 4px;
-    font-weight: 700;
-    font-size: 12px;
-    cursor: pointer;
-  }
-  .filter-chips button.active {
-    background: #bf0a30;
-    color: #fff;
-    border-color: #bf0a30;
-  }
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 0.4rem;
-  }
-  label { display: block; font-size: 11px; font-weight: 700; color: #002868; margin-bottom: 0.1rem; }
-  input, select, textarea {
+  .data-table {
     width: 100%;
+    border-collapse: collapse;
     background: #fff;
-    border: 2px solid #002868;
-    color: #000;
-    padding: 0.35rem 0.4rem;
-    border-radius: 3px;
     font-size: 13px;
+    margin-bottom: 0.5rem;
   }
-  textarea { min-height: 40px; }
+  .data-table th {
+    background: #002868;
+    color: #fff;
+    text-align: left;
+    padding: 0.35rem 0.5rem;
+    font-weight: 700;
+    font-size: 12px;
+    position: sticky;
+    top: 0;
+  }
+  .data-table td {
+    padding: 0.3rem 0.5rem;
+    border-bottom: 1px solid #e0e0e0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+  }
+  .data-table tr:hover {
+    background: #f0f4f8;
+    cursor: pointer;
+  }
+  .data-table tr:nth-child(even) {
+    background: #fafafa;
+  }
+  .data-table tr:nth-child(even):hover {
+    background: #f0f4f8;
+  }
   .section {
     background: #ffffff;
     border: 2px solid #002868;
