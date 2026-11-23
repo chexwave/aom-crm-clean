@@ -352,7 +352,15 @@ function renderBoard() {
   return `
   <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start">
     <div style="flex:1;min-width:280px">
-      <h2 style="margin:0 0 0.6rem;color:#002868;font-size:1.4rem;font-weight:800">Open Jobs</h2>
+      <h2 style="margin:0 0 0.5rem;color:#002868;font-size:1.4rem;font-weight:800">Open Jobs</h2>
+      <div class="filter-chips" style="margin-bottom:0.6rem">
+        <button onclick="filterByStatusChip('')" class="active" data-filter="">All</button>
+        <button onclick="filterByStatusChip('Needs Approval')" data-filter="Needs Approval">Needs Approval</button>
+        <button onclick="filterByStatusChip('Needs Parts')" data-filter="Needs Parts">Needs Parts</button>
+        <button onclick="filterByStatusChip('Needs Scheduled')" data-filter="Needs Scheduled">Needs Scheduled</button>
+        <button onclick="filterByStatusChip('Active')" data-filter="Active">Active</button>
+        <button onclick="filterByStatusChip('Needs Invoiced')" data-filter="Needs Invoiced">Needs Invoiced</button>
+      </div>
       <input id="quickSearch" placeholder="Search jobs, customers, boats..." oninput="filterBoard(this.value)" style="width:100%;font-size:15px;padding:0.55rem;margin-bottom:0.8rem;border:2px solid #002868;border-radius:6px">
       <div id="jobList">${openJobs.map(j => {
         const status = j.status || "Needs Approval";
@@ -408,6 +416,16 @@ function renderBoard() {
       </div>
     </div>
   </div>`;
+}
+
+function filterByStatusChip(status) {
+  document.querySelectorAll(".filter-chips button").forEach(btn => btn.classList.remove("active"));
+  const target = document.querySelector(`.filter-chips button[data-filter="${status}"]`);
+  if (target) target.classList.add("active");
+  document.querySelectorAll("#jobList .job-row").forEach(row => {
+    const rowStatus = row.querySelector(".status-pill")?.textContent || "";
+    row.style.display = (!status || rowStatus.includes(status)) ? "" : "none";
+  });
 }
 
 function filterBoard(q) {
