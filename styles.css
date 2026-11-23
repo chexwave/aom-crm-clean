@@ -149,6 +149,10 @@
     align-items: center;
   }
   .line.parts { grid-template-columns: 40px 1fr 56px 22px; }
+  .line span {
+    padding-left: 0.15rem;
+    font-size: 11px;
+  }
   .line input {
     padding: 0.2rem 0.25rem;
     font-size: 12px;
