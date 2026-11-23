@@ -243,6 +243,16 @@
     font-weight: 600;
     color: #002868;
   }
+  .sort-btn.active {
+    background: #002868 !important;
+    color: #fff !important;
+    border-color: #002868 !important;
+    box-shadow: 0 0 0 2px #bf0a30;
+  }
+  .sort-icon {
+    margin-left: 0.2rem;
+    font-weight: 900;
+  }
   .filter-chips {
     display: flex;
     flex-wrap: wrap;
