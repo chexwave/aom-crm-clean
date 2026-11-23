@@ -32,15 +32,21 @@
   }
   header h1 { margin: 0; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.3px; }
   header h1 span { color: #bf0a30; }
+  #jobList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.6rem;
+  }
   .job-row {
     background: #fff;
     border: none;
     border-left: 5px solid #002868;
     border-radius: 8px;
-    padding: 0.65rem 0.85rem;
-    margin-bottom: 0.45rem;
+    padding: 0.7rem 0.8rem;
+    margin-bottom: 0;
     cursor: pointer;
     box-shadow: 0 1px 4px rgba(0,40,104,0.08);
+    min-height: 92px;
   }
   .job-row:hover { box-shadow: 0 3px 10px rgba(0,40,104,0.16); }
   .status-pill {
