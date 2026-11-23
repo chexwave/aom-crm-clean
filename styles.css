@@ -295,24 +295,28 @@
     border: 2px solid #002868;
     border-top: 4px solid #bf0a30;
     border-radius: 4px;
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
+    padding: 0.35rem 0.4rem;
+    margin-bottom: 0.35rem;
     box-shadow: 2px 3px 5px rgba(0,40,104,0.12);
   }
   .section h2 { margin: 0 0 0.4rem; font-size: 0.95rem; font-weight: 800; color: #002868; }
   .sections-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.35rem;
   }
   .line {
     display: grid;
-    grid-template-columns: 60px 1fr 70px 28px;
-    gap: 0.25rem;
-    margin-bottom: 0.25rem;
+    grid-template-columns: 52px 1fr 62px 24px;
+    gap: 0.15rem;
+    margin-bottom: 0.15rem;
     align-items: center;
   }
-  .line.parts { grid-template-columns: 50px 1fr 70px 28px; }
+  .line.parts { grid-template-columns: 44px 1fr 62px 24px; }
+  .line input {
+    padding: 0.25rem 0.3rem;
+    font-size: 12.5px;
+  }
   .total {
     font-size: 1.1rem;
     font-weight: 800;
