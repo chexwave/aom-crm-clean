@@ -148,8 +148,8 @@
     margin-bottom: 0.1rem;
     align-items: center;
   }
-  .line.parts { grid-template-columns: 42px 1fr 58px 22px; }
-  .line.services { grid-template-columns: 46px 1fr 62px 22px; }
+  .line.parts { grid-template-columns: 42px 1fr 74px 22px; }
+  .line.services { grid-template-columns: 46px 1fr 78px 22px; }
   .line span {
     padding-left: 0.1rem;
     font-size: 11px;
