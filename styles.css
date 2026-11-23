@@ -95,6 +95,13 @@
     font-size: 12px;
     position: sticky;
     top: 0;
+    cursor: pointer;
+    user-select: none;
+  }
+  .th-icon {
+    margin-left: 0.25rem;
+    font-weight: 900;
+    font-size: 11px;
   }
   .data-table td {
     padding: 0.3rem 0.5rem;
