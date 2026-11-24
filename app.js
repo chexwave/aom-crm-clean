@@ -431,10 +431,30 @@ function renderBoard() {
       </div>`;
     }).join("");
 
+    // Collapsed summary: name + status chips + boat hint
+    const statusPriority = ["Needs Approval", "Needs Parts", "Needs Scheduled", "Active", "Needs Invoiced", "Done, Waiting Payment", "Done, Needs Picked Up"];
+    const uniqueStatuses = [...new Set(list.map(j => j.status || "Needs Approval"))];
+    uniqueStatuses.sort((a, b) => {
+      const ia = statusPriority.findIndex(s => a.includes(s));
+      const ib = statusPriority.findIndex(s => b.includes(s));
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+    const statusSummary = uniqueStatuses.slice(0, 2).map(s => {
+      const color = badgeColor(s);
+      const short = s.replace("Needs ", "").replace("Done, ", "");
+      return `<span style="font-size:10px;font-weight:700;background:${color};color:#fff;padding:0.1rem 0.35rem;border-radius:8px;white-space:nowrap">${short}</span>`;
+    }).join(" ");
+    const boats = [...new Set(list.map(j => j.boat || "No boat"))];
+    const boatHint = boats.length === 1 ? boats[0] : `${boats.length} boats`;
+
     return `<div class="job-group" data-search="${allSearch}" style="background:#fff;border:2px solid #002868;border-radius:8px;padding:0.5rem 0.6rem;box-shadow:0 1px 4px rgba(0,40,104,0.1)">
-      <div onclick="toggleGroup('${gid}')" style="font-weight:800;font-size:1.05rem;color:#002868;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none">
-        <span>${name}</span>
-        <span style="display:flex;align-items:center;gap:0.4rem">
+      <div onclick="toggleGroup('${gid}')" style="font-weight:800;font-size:1.05rem;color:#002868;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;gap:0.4rem">
+        <div style="flex:1;min-width:0">
+          <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+          <div style="font-size:11px;font-weight:600;color:#444;margin-top:0.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${boatHint}</div>
+        </div>
+        <span style="display:flex;align-items:center;gap:0.3rem;flex-shrink:0">
+          ${statusSummary}
           <span style="font-size:11px;font-weight:700;background:#002868;color:#fff;padding:0.15rem 0.45rem;border-radius:10px">${list.length} jobs</span>
           <span id="${gid}-chev" style="font-size:14px;font-weight:700">▸</span>
         </span>
