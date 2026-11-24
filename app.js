@@ -353,7 +353,6 @@ function resetSeed() {
     parts = [];
     seedExamples();
 show('home');
-    show("board");
   }
 }
 
@@ -400,19 +399,65 @@ function renderHome() {
   const needsParts = openJobs.filter(j => (j.status || "").includes("Needs Parts")).length;
   const needsScheduled = openJobs.filter(j => (j.status || "").includes("Needs Scheduled")).length;
   const active = openJobs.filter(j => (j.status || "").includes("Active")).length;
-  const recent = [...openJobs].sort((a, b) => (b.received || b.created || "").localeCompare(a.received || a.created || "")).slice(0, 5);
+  // Group open jobs by customer for homepage stacks
+  const homeGroups = new Map();
+  openJobs.forEach(j => {
+    const key = (j.customerName || j.customerId || "unknown").toString().trim().toLowerCase();
+    if (!homeGroups.has(key)) homeGroups.set(key, []);
+    homeGroups.get(key).push(j);
+  });
 
-  const recentHtml = recent.map(j => {
-    const status = j.status || "Needs Approval";
-    const color = (status.includes("Needs Approval") || status.includes("Active")) ? "#bf0a30" : status.includes("Needs Parts") ? "#c17d00" : status.includes("Needs Scheduled") ? "#1a5fbf" : "#002868";
-    return `<div onclick="show('job','${j.id}')" style="background:#fff;border-left:4px solid ${color};border-radius:6px;padding:0.55rem 0.7rem;margin-bottom:0.4rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,40,104,0.08)">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem">
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:800;font-size:0.95rem">${j.customerName || "—"} <span style="font-size:11px;color:#002868;font-weight:700">${jobLabel(j)}</span></div>
-          <div style="font-size:12px;color:#444;margin-top:0.1rem">${j.boat || "No boat"} · ${j.motor || ""}</div>
+  function homeBadgeColor(status) {
+    status = status || "";
+    if (status.includes("Needs Approval") || status.includes("Active")) return "#bf0a30";
+    if (status.includes("Needs Parts")) return "#c17d00";
+    if (status.includes("Needs Scheduled")) return "#1a5fbf";
+    return "#002868";
+  }
+
+  const recentHtml = Array.from(homeGroups.entries()).slice(0, 6).map(([key, list]) => {
+    if (list.length === 1) {
+      const j = list[0];
+      const status = j.status || "Needs Approval";
+      const color = homeBadgeColor(status);
+      return `<div onclick="show('job','${j.id}')" style="background:#fff;border-left:4px solid ${color};border-radius:6px;padding:0.55rem 0.7rem;margin-bottom:0.4rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,40,104,0.08)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:800;font-size:0.95rem">${j.customerName || "—"} <span style="font-size:11px;color:#002868;font-weight:700">${jobLabel(j)}</span></div>
+            <div style="font-size:12px;color:#444;margin-top:0.1rem">${j.boat || "No boat"} · ${j.motor || ""}</div>
+          </div>
+          <span class="status-pill" style="background:${color};font-size:10px">${status}</span>
         </div>
-        <span class="status-pill" style="background:${color};font-size:10px">${status}</span>
+      </div>`;
+    }
+    const name = list[0].customerName || "Unknown";
+    const gid = "hg-" + Math.random().toString(36).slice(2, 8);
+    const nested = list.map(j => {
+      const status = j.status || "Needs Approval";
+      const color = homeBadgeColor(status);
+      return `<div onclick="event.stopPropagation(); show('job','${j.id}')" style="border-left:4px solid ${color};padding:0.4rem 0.55rem;margin:0.15rem 0;background:#fafafa;border-radius:4px;cursor:pointer">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;font-weight:700;color:#002868">${jobLabel(j)}</div>
+            <div style="font-size:12px;font-weight:700">${j.boat || "No boat"} · ${j.motor || ""}</div>
+          </div>
+          <span class="status-pill" style="background:${color};font-size:10px">${status}</span>
+        </div>
+      </div>`;
+    }).join("");
+    const nums = list.map(j => jobLabel(j)).slice(0, 3).join(" · ") + (list.length > 3 ? "…" : "");
+    return `<div style="background:#fff;border:2px solid #002868;border-radius:8px;padding:0.5rem 0.6rem;margin-bottom:0.4rem;box-shadow:0 1px 3px rgba(0,40,104,0.08)">
+      <div onclick="toggleGroup('${gid}')" style="font-weight:800;font-size:0.95rem;color:#002868;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+        <div>
+          <div>${name}</div>
+          <div style="font-size:10px;font-weight:700;color:#002868;margin-top:0.1rem">${nums}</div>
+        </div>
+        <span style="display:flex;align-items:center;gap:0.3rem">
+          <span style="font-size:11px;font-weight:700;background:#002868;color:#fff;padding:0.1rem 0.4rem;border-radius:10px">${list.length} jobs</span>
+          <span id="${gid}-chev">▸</span>
+        </span>
       </div>
+      <div id="${gid}" style="display:none;margin-top:0.3rem">${nested}</div>
     </div>`;
   }).join("") || `<p style="color:#666">No open jobs yet.</p>`;
 
@@ -1456,7 +1501,7 @@ function addFromCatalog(jid, partId) {
   if (box) box.style.display = "none";
 }
 
-show("board");
+show("home");
 
 setTimeout(() => {
   const app = document.getElementById("app");
