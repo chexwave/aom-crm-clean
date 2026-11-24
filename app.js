@@ -1,1 +1,1 @@
-FULL_CONTENT_FROM_FILE
+console.log('v1.5 collapse test marker');
