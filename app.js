@@ -387,6 +387,7 @@ function show(view, id) {
   if (view === "new") app.innerHTML = renderNew();
   if (view === "job") app.innerHTML = renderJob(id);
   if (view === "customers") app.innerHTML = renderCustomers();
+  if (view === "newcustomer") app.innerHTML = renderNewCustomer();
   if (view === "customer") app.innerHTML = renderCustomer(id);
   if (view === "parts") app.innerHTML = renderParts();
   if (view === "part") app.innerHTML = renderPart(id);
@@ -813,6 +814,40 @@ function filterBoard(q) {
     const match = card.dataset.search.includes(term);
     card.style.display = match ? "" : "none";
   });
+}
+
+
+function renderNewCustomer() {
+  return `
+  <div style="max-width:520px;margin:0 auto">
+    <h2 style="margin:0 0 0.8rem;color:#002868;font-weight:800">New Customer</h2>
+    <form onsubmit="createCustomer(event)" style="background:#fff;border:2px solid #002868;border-radius:8px;padding:0.8rem">
+      <div style="margin-bottom:0.5rem"><label style="font-weight:700;font-size:13px">Name</label><br><input name="name" required style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:4px"></div>
+      <div style="margin-bottom:0.5rem"><label style="font-weight:700;font-size:13px">Phone</label><br><input name="phone" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:4px"></div>
+      <div style="margin-bottom:0.5rem"><label style="font-weight:700;font-size:13px">Email</label><br><input name="email" type="email" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:4px"></div>
+      <div style="margin-bottom:0.6rem"><label style="font-weight:700;font-size:13px">Address</label><br><input name="address" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:4px"></div>
+      <div style="display:flex;gap:0.4rem">
+        <button class="btn" type="submit">Save Customer</button>
+        <button class="btn secondary" type="button" onclick="show('customers')">Cancel</button>
+      </div>
+    </form>
+  </div>`;
+}
+
+function createCustomer(e) {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const customer = {
+    id: uid(),
+    customerNumber: nextCustomerNumber(),
+    name: f.get("name") || "",
+    phone: f.get("phone") || "",
+    email: f.get("email") || "",
+    address: f.get("address") || ""
+  };
+  customers.push(customer);
+  save();
+  show("customer", customer.id);
 }
 
 function renderCustomers() {
