@@ -352,6 +352,7 @@ function resetSeed() {
     customers = [];
     parts = [];
     seedExamples();
+show('home');
     show("board");
   }
 }
@@ -363,7 +364,7 @@ if (!jobs.length) {
 try { mergeCatalog(); } catch(e) { console.warn("mergeCatalog skipped", e); }
 
 function setActiveNav(view) {
-  ["board","new","customers","parts"].forEach(v => {
+  ["home","board","new","customers","parts"].forEach(v => {
     const el = document.getElementById("nav-" + v);
     if (el) el.classList.toggle("active", view === v);
   });
@@ -373,6 +374,7 @@ function show(view, id) {
   currentView = view;
   setActiveNav(view);
   const app = document.getElementById("app");
+  if (view === "home") app.innerHTML = renderHome();
   if (view === "board") app.innerHTML = renderBoard();
   if (view === "new") app.innerHTML = renderNew();
   if (view === "job") app.innerHTML = renderJob(id);
@@ -389,6 +391,76 @@ function punchLabel(j) {
 
 function jobLabel(j) {
   return j.jobNumber || "—";
+}
+
+
+function renderHome() {
+  const openJobs = jobs.filter(j => !(j.status || "").startsWith("Done, Archived"));
+  const needsApproval = openJobs.filter(j => (j.status || "").includes("Needs Approval")).length;
+  const needsParts = openJobs.filter(j => (j.status || "").includes("Needs Parts")).length;
+  const needsScheduled = openJobs.filter(j => (j.status || "").includes("Needs Scheduled")).length;
+  const active = openJobs.filter(j => (j.status || "").includes("Active")).length;
+  const recent = [...openJobs].sort((a, b) => (b.received || b.created || "").localeCompare(a.received || a.created || "")).slice(0, 5);
+
+  const recentHtml = recent.map(j => {
+    const status = j.status || "Needs Approval";
+    const color = (status.includes("Needs Approval") || status.includes("Active")) ? "#bf0a30" : status.includes("Needs Parts") ? "#c17d00" : status.includes("Needs Scheduled") ? "#1a5fbf" : "#002868";
+    return `<div onclick="show('job','${j.id}')" style="background:#fff;border-left:4px solid ${color};border-radius:6px;padding:0.55rem 0.7rem;margin-bottom:0.4rem;cursor:pointer;box-shadow:0 1px 3px rgba(0,40,104,0.08)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:800;font-size:0.95rem">${j.customerName || "—"} <span style="font-size:11px;color:#002868;font-weight:700">${jobLabel(j)}</span></div>
+          <div style="font-size:12px;color:#444;margin-top:0.1rem">${j.boat || "No boat"} · ${j.motor || ""}</div>
+        </div>
+        <span class="status-pill" style="background:${color};font-size:10px">${status}</span>
+      </div>
+    </div>`;
+  }).join("") || `<p style="color:#666">No open jobs yet.</p>`;
+
+  return `
+  <div style="max-width:900px;margin:0 auto">
+    <h2 style="margin:0 0 0.3rem;color:#002868;font-size:1.6rem;font-weight:800">American Outboard Motors</h2>
+    <p style="margin:0 0 1rem;color:#444;font-size:14px">Shop command center · ${openJobs.length} open job${openJobs.length === 1 ? "" : "s"}</p>
+
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem">
+      <div onclick="show('board')" style="flex:1;min-width:120px;background:#fff;border:2px solid #002868;border-radius:8px;padding:0.6rem;text-align:center;cursor:pointer">
+        <div style="font-size:1.5rem;font-weight:800;color:#002868">${openJobs.length}</div>
+        <div style="font-size:12px;font-weight:700;color:#002868">Open Jobs</div>
+      </div>
+      <div style="flex:1;min-width:120px;background:#fff;border:2px solid #bf0a30;border-radius:8px;padding:0.6rem;text-align:center">
+        <div style="font-size:1.5rem;font-weight:800;color:#bf0a30">${needsApproval}</div>
+        <div style="font-size:12px;font-weight:700;color:#bf0a30">Needs Approval</div>
+      </div>
+      <div style="flex:1;min-width:120px;background:#fff;border:2px solid #c17d00;border-radius:8px;padding:0.6rem;text-align:center">
+        <div style="font-size:1.5rem;font-weight:800;color:#c17d00">${needsParts}</div>
+        <div style="font-size:12px;font-weight:700;color:#c17d00">Needs Parts</div>
+      </div>
+      <div style="flex:1;min-width:120px;background:#fff;border:2px solid #1a5fbf;border-radius:8px;padding:0.6rem;text-align:center">
+        <div style="font-size:1.5rem;font-weight:800;color:#1a5fbf">${needsScheduled}</div>
+        <div style="font-size:12px;font-weight:700;color:#1a5fbf">Needs Scheduled</div>
+      </div>
+      <div style="flex:1;min-width:120px;background:#fff;border:2px solid #bf0a30;border-radius:8px;padding:0.6rem;text-align:center">
+        <div style="font-size:1.5rem;font-weight:800;color:#bf0a30">${active}</div>
+        <div style="font-size:12px;font-weight:700;color:#bf0a30">Active</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:1rem;flex-wrap:wrap">
+      <div style="flex:2;min-width:280px">
+        <h3 style="margin:0 0 0.5rem;color:#002868;font-size:1.1rem;font-weight:800">Recent Open Jobs</h3>
+        ${recentHtml}
+        <button class="btn" style="margin-top:0.5rem" onclick="show('board')">View All Open Jobs</button>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <h3 style="margin:0 0 0.5rem;color:#002868;font-size:1.1rem;font-weight:800">Quick Actions</h3>
+        <div style="display:flex;flex-direction:column;gap:0.4rem">
+          <button class="btn" onclick="show('new')">+ New Quote</button>
+          <button class="btn secondary" onclick="show('customers')">Customers</button>
+          <button class="btn secondary" onclick="show('parts')">Parts</button>
+          <button class="btn secondary" onclick="show('board')">Open Jobs Board</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
 }
 
 function renderBoard() {
