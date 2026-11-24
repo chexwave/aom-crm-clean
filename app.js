@@ -1,4 +1,4 @@
-// AOM CRM — data model sketch v2.1 (Customer/Boat/Motor profiles + Estimate→Archive prefix)
+// AOM CRM v2.2 — restored full UI + Estimate→Archive prefixes + boats/motors storage
 const RATES = { tech: 125, bench: 100, sea: 150 };
 const STATUSES = ["Estimate", "Quote", "Service Order", "Invoice", "Archive"];
 const WORK_GROUPS = ["Winterize", "Repair", "Service", "Sea Trial", "Clean", "Install", "Diagnose", "Oil Change"];
@@ -69,21 +69,18 @@ function nextJobNumber() {
 }
 
 function displayPrefix(status) {
-  const map = {
-    "Estimate": "Estimate",
-    "Quote": "Quote",
-    "Service Order": "Service Order",
-    "Invoice": "Invoice",
-    "Archive": "Archive"
-  };
-  return map[status] || "Estimate";
+  const s = status || "";
+  if (s.includes("Estimate") || s.includes("Needs Approval")) return "Estimate";
+  if (s.includes("Quote") || s.includes("Needs Parts")) return "Quote";
+  if (s.includes("Service Order") || s.includes("Needs Scheduled") || s.includes("Active")) return "Service Order";
+  if (s.includes("Invoice") || s.includes("Needs Invoiced") || s.includes("Waiting Payment")) return "Invoice";
+  if (s.includes("Archive")) return "Archive";
+  return "Estimate";
 }
-
 function displayJobNumber(j) {
   const num = (j.jobNumber || "J-10000").replace(/^J-/, "");
   return displayPrefix(j.status) + "-" + num;
 }
-
 function findBoat(id) { return boats.find(b => b.id === id); }
 function findMotor(id) { return motors.find(m => m.id === id); }
 
@@ -365,7 +362,6 @@ function renderHome() {
   const needsParts = openJobs.filter(j => (j.status || "").includes("Quote") || (j.status || "").includes("Needs Parts")).length;
   const needsScheduled = openJobs.filter(j => (j.status || "").includes("Service Order") || (j.status || "").includes("Needs Scheduled")).length;
   const active = openJobs.filter(j => (j.status || "").includes("Active") || (j.status || "").includes("Service Order")).length;
-  // Group open jobs by customer for homepage stacks
   const homeGroups = new Map();
   openJobs.forEach(j => {
     const key = (j.customerName || j.customerId || "unknown").toString().trim().toLowerCase();
@@ -664,66 +660,187 @@ function saveNewPart(e) {
 }
 
 function renderNew() {
-  const custOpts = customers.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
   return `
-  <h2>New Estimate</h2>
-  <form onsubmit="saveNewJob(event)">
-    <div class="field"><label>Customer</label><select name="customerId">${custOpts}<option value="">+ New Customer</option></select></div>
-    <div class="field"><label>Boat</label><input name="boat"></div>
-    <div class="field"><label>Motor</label><input name="motor"></div>
-    <div class="field"><label>Complaint / Notes</label><input name="complaint"></div>
-    <button class="btn" type="submit">Create Estimate</button>
-  </form>
-  `;
+  <div class="section">
+    <h2>New Estimate</h2>
+    <div class="search-box">
+      <label>Find existing customer</label>
+      <input id="custSearch" oninput="searchCust(this.value)" placeholder="Type name or phone...">
+      <div id="custResults"></div>
+    </div>
+    <form onsubmit="createQuote(event)">
+      <div class="form-grid">
+        <div><label>Customer Name *</label><input name="name" required></div>
+        <div><label>Phone</label><input name="phone"></div>
+        <div><label>Email</label><input name="email"></div>
+        <div><label>Boat</label><input name="boat" placeholder="Scout 185"></div>
+        <div><label>Motor</label><input name="motor" placeholder="Yamaha F115"></div>
+      </div>
+
+      <div style="margin:1rem 0">
+        <label style="font-weight:700;color:#002868">Labor</label>
+        <div id="quote-labor"></div>
+        <button type="button" class="btn secondary" onclick="addQuoteLabor()" style="margin-top:0.4rem">+ Add Labor</button>
+      </div>
+
+      <div style="margin:1rem 0">
+        <label style="font-weight:700;color:#002868">Parts</label>
+        <div id="quote-parts"></div>
+        <button type="button" class="btn secondary" onclick="addQuotePart()" style="margin-top:0.4rem">+ Add Part</button>
+      </div>
+
+      <div style="margin:0.8rem 0">
+        <label>Work Groups</label>
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.3rem">
+          ${WORK_GROUPS.map(g => `<label style="font-weight:600;font-size:13px"><input type="checkbox" name="workGroups" value="${g}"> ${g}</label>`).join("")}
+        </div>
+      </div>
+      <div style="margin:0.6rem 0">
+        <label>Note</label>
+        <textarea name="note" placeholder="Boat is in the driveway with a blue cover..." style="width:100%;min-height:60px"></textarea>
+      </div>
+      <button class="btn" type="submit">Finish Estimate</button>
+      <button class="btn secondary" type="button" onclick="show('board')">Cancel</button>
+    </form>
+  </div>`;
 }
 
-function saveNewJob(e) {
+function addQuoteLabor() {
+  const div = document.getElementById("quote-labor");
+  const row = document.createElement("div");
+  row.className = "line";
+  row.style.marginBottom = "0.4rem";
+  row.style.position = "relative";
+  const id = "labor-" + Date.now();
+  row.innerHTML = `
+    <input name="laborHours" type="number" step="0.5" placeholder="Hrs" style="width:70px">
+    <input id="${id}" name="laborDesc" placeholder="Description (e.g. Oil change)" style="flex:1">
+    <button type="button" class="btn secondary" onclick="this.parentElement.remove()" style="padding:0.2rem 0.4rem">×</button>
+  `;
+  div.appendChild(row);
+}
+
+function addQuotePart() {
+  const div = document.getElementById("quote-parts");
+  const row = document.createElement("div");
+  row.className = "line parts";
+  row.style.marginBottom = "0.4rem";
+  row.style.position = "relative";
+  const id = "part-" + Date.now();
+  row.innerHTML = `
+    <input name="partQty" type="number" step="1" value="1" style="width:60px">
+    <input id="${id}" name="partDesc" placeholder="Search or type part" oninput="searchPart(this)" style="flex:1">
+    <div id="${id}-results" style="position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid #002868;border-radius:4px;z-index:10;display:none;max-height:180px;overflow-y:auto"></div>
+    <input name="partPrice" type="number" step="0.01" placeholder="Price" style="width:80px">
+    <button type="button" class="btn secondary" onclick="this.parentElement.remove()" style="padding:0.2rem 0.4rem">×</button>
+  `;
+  div.appendChild(row);
+}
+
+function searchPart(input) {
+  const q = input.value.toLowerCase().trim();
+  const box = document.getElementById(input.id + "-results");
+  if (!q || q.length < 1) { box.style.display = "none"; return; }
+  const matches = parts.filter(p => 
+    (p.brand + " " + p.productName + " " + p.sku + " " + (p.description||"")).toLowerCase().includes(q)
+  ).slice(0, 8);
+  if (!matches.length) { box.style.display = "none"; return; }
+  box.innerHTML = matches.map(p => `
+    <div style="padding:0.3rem 0.45rem;cursor:pointer;border-bottom:1px solid #eee;font-size:13px;line-height:1.3" 
+      onclick="pickPart('${input.id}', '${(p.brand + " " + p.productName).replace(/'/g,"\\'")}', ${p.price || 0})">
+      <strong>${p.brand} ${p.productName}</strong> · ${p.sku || ""} 
+      <span style="float:right;color:#002868;font-weight:700">$${(p.price||0).toFixed(2)}</span>
+    </div>`).join("");
+  box.style.display = "block";
+}
+
+function pickPart(inputId, desc, price) {
+  const input = document.getElementById(inputId);
+  input.value = desc;
+  const priceInput = input.parentElement.querySelector("[name=partPrice]");
+  if (priceInput && price) priceInput.value = price;
+  document.getElementById(inputId + "-results").style.display = "none";
+}
+
+function createQuote(e) {
   e.preventDefault();
-  const fd = new FormData(e.target);
-  let customerId = fd.get("customerId");
-  let customerName = "";
-  let customerNumber = "";
-  if (!customerId) {
-    const name = prompt("New customer name") || "Unknown";
-    const c = { id: uid(), customerNumber: nextCustomerNumber(), name, phone: "", email: "", address: "" };
-    customers.push(c);
-    customerId = c.id;
-    customerName = c.name;
-    customerNumber = c.customerNumber;
-  } else {
-    const c = customers.find(x => x.id === customerId);
-    customerName = c ? c.name : "";
-    customerNumber = c ? c.customerNumber : "";
-  }
-  const j = {
+  const f = new FormData(e.target);
+  const custId = uid();
+  const customer = {
+    id: custId,
+    customerNumber: nextCustomerNumber(),
+    name: f.get("name"),
+    phone: f.get("phone"),
+    email: f.get("email")
+  };
+  customers.push(customer);
+
+  const workGroups = f.getAll("workGroups");
+
+  const labor = [];
+  const hours = f.getAll("laborHours");
+  const ldescs = f.getAll("laborDesc");
+  hours.forEach((h, i) => {
+    if (h && ldescs[i]) labor.push({ hours: parseFloat(h) || 0, desc: ldescs[i] });
+  });
+
+  const partsLines = [];
+  const qtys = f.getAll("partQty");
+  const pdescs = f.getAll("partDesc");
+  const prices = f.getAll("partPrice");
+  qtys.forEach((q, i) => {
+    if (pdescs[i]) partsLines.push({ qty: parseFloat(q) || 1, desc: pdescs[i], price: parseFloat(prices[i]) || 0 });
+  });
+
+  const job = {
     id: uid(),
-    punchId: makePunchId(),
     jobNumber: nextJobNumber(),
-    customerId,
-    customerName,
-    customerNumber,
-    boat: fd.get("boat") || "",
-    motor: fd.get("motor") || "",
+    punchId: makePunchId(),
+    customerId: custId,
+    customerName: customer.name,
+    customerNumber: customer.customerNumber,
+    boat: f.get("boat") || "",
+    motor: f.get("motor") || "",
     received: new Date().toISOString().slice(0,10),
     status: "Estimate",
-    workGroups: [],
-    labor: [],
+    workGroups,
+    labor,
     services: [],
-    parts: [],
-    notes: fd.get("complaint") || "",
+    parts: partsLines,
+    notes: f.get("note") || "",
     created: new Date().toISOString()
   };
-  jobs.push(j);
+  jobs.push(job);
   save();
-  show("job", j.id);
+  show("job", job.id);
+}
+
+function searchCust(q) {
+  const box = document.getElementById("custResults");
+  if (!q || q.length < 1) { box.innerHTML = ""; return; }
+  const matches = customers.filter(c => (c.name + " " + (c.phone||"") + " " + (c.customerNumber||"")).toLowerCase().includes(q.toLowerCase())).slice(0, 8);
+  box.innerHTML = matches.map(c => `<div style="padding:0.35rem 0.5rem;cursor:pointer;border-bottom:1px solid #eee" onclick="pickCust('${c.id}')">${c.name} <span style="color:#666">${c.phone||""}</span></div>`).join("") || "<div style='padding:0.3rem;color:#666'>No matches — fill form below to create new</div>";
+}
+
+function pickCust(id) {
+  const c = customers.find(x => x.id === id);
+  if (!c) return;
+  const form = document.querySelector("form");
+  if (form) {
+    form.querySelector("[name=name]").value = c.name || "";
+    form.querySelector("[name=phone]").value = c.phone || "";
+    form.querySelector("[name=email]").value = c.email || "";
+  }
+  document.getElementById("custResults").innerHTML = "";
+  document.getElementById("custSearch").value = c.name;
 }
 
 function renderJob(id) {
   const j = jobs.find(x => x.id === id);
   if (!j) return show("board");
-  const laborTotal = j.labor.reduce((s,l) => s + (parseFloat(l.hours)||0) * RATES.tech, 0);
-  const serviceTotal = j.services.reduce((s,l) => s + (parseFloat(l.qty)||1) * (parseFloat(l.amount)||0), 0);
-  const partsTotal = j.parts.reduce((s,l) => s + (parseFloat(l.qty)||0) * (parseFloat(l.price)||0), 0);
+  const laborTotal = (j.labor || []).reduce((s,l) => s + (parseFloat(l.hours)||0) * RATES.tech, 0);
+  const serviceTotal = (j.services || []).reduce((s,l) => s + (parseFloat(l.qty)||1) * (parseFloat(l.amount)||0), 0);
+  const partsTotal = (j.parts || []).reduce((s,l) => s + (parseFloat(l.qty)||0) * (parseFloat(l.price)||0), 0);
   const grand = laborTotal + serviceTotal + partsTotal;
   const pid = punchLabel(j);
 
@@ -742,26 +859,14 @@ function renderJob(id) {
   <div class="sections-grid">
     <div class="section">
       <h2>Labor</h2>
-      <div class="line" style="font-size:11px;font-weight:700;color:#002868;margin-bottom:0.2rem">
-        <span>Hrs</span>
-        <span>Description</span>
-        <span>Amount</span>
-        <span></span>
-      </div>
-      <div id="labor-lines">${j.labor.map((l,i) => lineLabor(j.id, i, l)).join("")}</div>
+      <div id="labor-lines">${(j.labor||[]).map((l,i) => lineLabor(j.id, i, l)).join("")}</div>
       <button class="btn secondary" onclick="addLine('${j.id}','labor')">+ Labor</button>
       <div class="total">$${laborTotal.toFixed(2)}</div>
     </div>
 
     <div class="section">
       <h2>Services</h2>
-      <div class="line services" style="font-size:11px;font-weight:700;color:#002868;margin-bottom:0.2rem">
-        <span>Qty</span>
-        <span>Description</span>
-        <span>Amount</span>
-        <span></span>
-      </div>
-      <div id="service-lines">${j.services.map((l,i) => lineService(j.id, i, l)).join("")}</div>
+      <div id="service-lines">${(j.services||[]).map((l,i) => lineService(j.id, i, l)).join("")}</div>
       <button class="btn secondary" onclick="addLine('${j.id}','services')">+ Service</button>
       <div class="total">$${serviceTotal.toFixed(2)}</div>
     </div>
@@ -769,10 +874,10 @@ function renderJob(id) {
     <div class="section">
       <h2>Parts</h2>
       <div style="margin-bottom:0.4rem;position:relative">
-        <input id="partPick-${j.id}" placeholder="Search catalog (brand, name, sku)" oninput="filterParts('${j.id}', this.value)" style="width:100%">
+        <input id="partPick-${j.id}" placeholder="Search catalog" oninput="filterParts('${j.id}', this.value)" style="width:100%">
         <div id="partResults-${j.id}" style="position:absolute;background:#fff;border:1px solid #ccc;max-height:160px;overflow:auto;width:100%;z-index:10;display:none"></div>
       </div>
-      <div id="parts-lines">${j.parts.map((l,i) => lineParts(j.id, i, l)).join("")}</div>
+      <div id="parts-lines">${(j.parts||[]).map((l,i) => lineParts(j.id, i, l)).join("")}</div>
       <button class="btn secondary" onclick="addLine('${j.id}','parts')">+ Part</button>
       <div class="total">$${partsTotal.toFixed(2)}</div>
     </div>
@@ -794,7 +899,7 @@ function updateStatus(jid, status) {
 function lineLabor(jid, i, l) {
   return `<div class="line">
     <input type="number" step="0.5" value="${l.hours||""}" placeholder="hrs" onchange="updateLine('${jid}','labor',${i},'hours',this.value)">
-    <input value="${l.desc||""}" placeholder="Winterize, Snap..." onchange="updateLine('${jid}','labor',${i},'desc',this.value)">
+    <input value="${l.desc||""}" placeholder="Description" onchange="updateLine('${jid}','labor',${i},'desc',this.value)">
     <span style="font-size:12px;font-weight:700">$${((l.hours||0)*RATES.tech).toFixed(2)}</span>
     <button class="btn secondary" style="padding:0.2rem 0.3rem" onclick="removeLine('${jid}','labor',${i})">×</button>
   </div>`;
@@ -803,10 +908,10 @@ function lineService(jid, i, l) {
   const amt = (parseFloat(l.amount) || 0).toFixed(2);
   return `<div class="line services">
     <input type="number" step="1" value="${l.qty||"1"}" placeholder="qty" onchange="updateLine('${jid}','services',${i},'qty',this.value)">
-    <input value="${l.desc||""}" placeholder="Haul out..." onchange="updateLine('${jid}','services',${i},'desc',this.value)">
+    <input value="${l.desc||""}" placeholder="Description" onchange="updateLine('${jid}','services',${i},'desc',this.value)">
     <div style="display:flex;align-items:center;gap:2px">
       <span style="font-size:12px;font-weight:700;color:#002868">$</span>
-      <input type="number" step="0.01" value="${amt}" placeholder="0.00" onchange="updateLine('${jid}','services',${i},'amount',this.value)" style="width:100%">
+      <input type="number" step="0.01" value="${amt}" onchange="updateLine('${jid}','services',${i},'amount',this.value)" style="width:100%">
     </div>
     <button class="btn secondary" style="padding:0.2rem 0.3rem" onclick="removeLine('${jid}','services',${i})">×</button>
   </div>`;
@@ -815,10 +920,10 @@ function lineParts(jid, i, l) {
   const price = (parseFloat(l.price) || 0).toFixed(2);
   return `<div class="line parts">
     <input type="number" step="1" value="${l.qty||""}" placeholder="qty" onchange="updateLine('${jid}','parts',${i},'qty',this.value)">
-    <input value="${l.desc||""}" placeholder="desc / part #" onchange="updateLine('${jid}','parts',${i},'desc',this.value)">
+    <input value="${l.desc||""}" placeholder="desc" onchange="updateLine('${jid}','parts',${i},'desc',this.value)">
     <div style="display:flex;align-items:center;gap:2px">
       <span style="font-size:12px;font-weight:700;color:#002868">$</span>
-      <input type="number" step="0.01" value="${price}" placeholder="0.00" onchange="updateLine('${jid}','parts',${i},'price',this.value)" style="width:100%">
+      <input type="number" step="0.01" value="${price}" onchange="updateLine('${jid}','parts',${i},'price',this.value)" style="width:100%">
     </div>
     <button class="btn secondary" style="padding:0.2rem 0.3rem" onclick="removeLine('${jid}','parts',${i})">×</button>
   </div>`;
@@ -826,6 +931,7 @@ function lineParts(jid, i, l) {
 
 function addLine(jid, type) {
   const j = jobs.find(x => x.id === jid);
+  if (!j[type]) j[type] = [];
   j[type].push(type === "labor" ? {hours:1, desc:""} : type === "services" ? {qty:1, amount:0, desc:""} : {qty:1, desc:"", price:0});
   save(); show("job", jid);
 }
@@ -852,6 +958,7 @@ function addCatalogPart(jid, pid) {
   const p = parts.find(x => x.id === pid);
   if (!p) return;
   const j = jobs.find(x => x.id === jid);
+  if (!j.parts) j.parts = [];
   j.parts.push({ qty: 1, desc: (p.sku ? p.sku + " " : "") + (p.productName || p.description || ""), price: p.price || 0 });
   save();
   show("job", jid);
