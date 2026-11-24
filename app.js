@@ -10,12 +10,16 @@ const CATEGORIES = ["Motor Oil", "Gear Oil", "Filter", "Additive", "Trim", "Anod
 
 let jobs = [];
 let customers = [];
+let boats = [];
+let motors = [];
 let parts = [];
 let currentView = "board";
 
 try {
   jobs = JSON.parse(localStorage.getItem("aom_jobs") || "[]");
   customers = JSON.parse(localStorage.getItem("aom_customers") || "[]");
+  boats = JSON.parse(localStorage.getItem("aom_boats") || "[]");
+  motors = JSON.parse(localStorage.getItem("aom_motors") || "[]");
   parts = JSON.parse(localStorage.getItem("aom_parts") || "[]");
   // Backfill job numbers for any jobs that don't have one
   let dirty = false;
@@ -37,6 +41,8 @@ function save() {
   try {
     localStorage.setItem("aom_jobs", JSON.stringify(jobs));
     localStorage.setItem("aom_customers", JSON.stringify(customers));
+    localStorage.setItem("aom_boats", JSON.stringify(boats));
+    localStorage.setItem("aom_motors", JSON.stringify(motors));
     localStorage.setItem("aom_parts", JSON.stringify(parts));
   } catch (e) {
     console.warn("Could not save to localStorage", e);
@@ -117,6 +123,30 @@ function seedExamples() {
   const c5 = { id: "c-ellis", customerNumber: "C-10005", name: "Morgan Ellis", phone: "410-555-0177", email: "morgan.ellis@example.com", address: "" };
   const c6 = { id: "c-quinn", customerNumber: "C-10006", name: "Riley Quinn", phone: "410-555-0133", email: "riley.quinn@example.com", address: "" };
   customers = [c1, c2, c3, c4, c5, c6];
+
+  // Mock Boat + Motor profiles (additive)
+  if (boats.length === 0) {
+    boats = [
+      { id: "b-scout", name: "Scout 185", year: "2018", brand: "Scout", model: "185", size: "18.5 ft", keysCode: "Blue cover", location: "Shop yard", trailerStatus: "On trailer", hullNumber: "SC185-4421", notes: "Dual console, good shape", currentCustomerId: "c-rivera", history: ["c-rivera"] },
+      { id: "b-searay", name: "Searay", year: "2008", brand: "Searay", model: "Sundancer", size: "24 ft", keysCode: "", location: "Customer slip", trailerStatus: "In water", hullNumber: "SR24-8801", notes: "Needs bottom paint", currentCustomerId: "c-hale", history: ["c-hale"] },
+      { id: "b-path", name: "Pathfinder 2300", year: "2021", brand: "Pathfinder", model: "2300", size: "23 ft", keysCode: "Lockbox 4", location: "Marina", trailerStatus: "On trailer", hullNumber: "PF2300-119", notes: "New electronics", currentCustomerId: "c-carter", history: ["c-carter"] },
+      { id: "b-whaler", name: "Boston Whaler 170", year: "2015", brand: "Boston Whaler", model: "170 Montauk", size: "17 ft", keysCode: "", location: "Shop", trailerStatus: "On trailer", hullNumber: "BW170-556", notes: "Center console", currentCustomerId: "c-brooks", history: ["c-brooks"] },
+      { id: "b-seahunt", name: "Sea Hunt 21", year: "2019", brand: "Sea Hunt", model: "BX21", size: "21 ft", keysCode: "", location: "Customer", trailerStatus: "In water", hullNumber: "SH21-302", notes: "", currentCustomerId: "c-ellis", history: ["c-ellis"] },
+      { id: "b-contender", name: "Contender 25", year: "2016", brand: "Contender", model: "25 Bay", size: "25 ft", keysCode: "Key 2", location: "Yard", trailerStatus: "On trailer", hullNumber: "CT25-778", notes: "Twin setup ready", currentCustomerId: "c-quinn", history: ["c-quinn", "c-hale"] }
+    ];
+  }
+  if (motors.length === 0) {
+    motors = [
+      { id: "m-f115", year: "2018", brand: "Yamaha", model: "F115", hp: 115, type: "Outboard", prop: "RH", setup: "Single", sn: "6EK-104821", family: "", notes: "Runs clean", currentCustomerId: "c-rivera", currentBoatId: "b-scout", history: ["c-rivera"] },
+      { id: "m-merc43", year: "2008", brand: "Mercruiser", model: "4.3L", hp: 190, type: "IO", prop: "RH", setup: "Single", sn: "1A330575", family: "8M9XM04.32VC", notes: "Alpha drive", currentCustomerId: "c-hale", currentBoatId: "b-searay", history: ["c-hale"] },
+      { id: "m-yam300", year: "2021", brand: "Yamaha", model: "300", hp: 300, type: "Outboard", prop: "RH", setup: "Single", sn: "6CE-220145", family: "", notes: "V6", currentCustomerId: "c-carter", currentBoatId: "b-path", history: ["c-carter"] },
+      { id: "m-merc115", year: "2015", brand: "Mercury", model: "115", hp: 115, type: "Outboard", prop: "LH", setup: "Single", sn: "1B789012", family: "", notes: "", currentCustomerId: "c-brooks", currentBoatId: "b-whaler", history: ["c-brooks"] },
+      { id: "m-suz150", year: "2019", brand: "Suzuki", model: "150", hp: 150, type: "Outboard", prop: "RH", setup: "Single", sn: "15001F-334455", family: "", notes: "Four stroke", currentCustomerId: "c-ellis", currentBoatId: "b-seahunt", history: ["c-ellis"] },
+      { id: "m-yam300b", year: "2016", brand: "Yamaha", model: "300", hp: 300, type: "Outboard", prop: "RH", setup: "Twin", sn: "6CE-118833", family: "", notes: "Port motor of twin", currentCustomerId: "c-quinn", currentBoatId: "b-contender", history: ["c-quinn"] },
+      { id: "m-spare", year: "2012", brand: "Honda", model: "BF90", hp: 90, type: "Outboard", prop: "RH", setup: "Single", sn: "BBBJ-109988", family: "", notes: "Spare / previously on Contender", currentCustomerId: null, currentBoatId: null, history: ["c-quinn"] }
+    ];
+  }
+
 
   parts = [
     { id: "p1", brand: "LiquiMoly", category: "Motor Oil", productName: "10W-40", qtySize: "1.06 Qt (1 L)", sku: "LOM 20506", upc: "4100420205064", description: "Marine 4 Stroke Motor Oil SAE 10W-40", price: 13.99, qtyOnHand: 0 },
@@ -981,13 +1011,22 @@ function renderCustomer(id) {
   </div>
 
   <div class="section">
-    <h2>Boats & Motors (${boats.length})</h2>
-    ${boats.length ? boats.map(b => `
-      <div style="padding:0.4rem 0;border-bottom:1px solid #ddd">
-        <strong>${b.boat || "Boat"}</strong> · ${b.motor || "Motor"}<br>
-        <span class="meta">Year: ${b.year || "—"} · SN: ${b.sn || "—"} · Family: ${b.family || "—"}</span>
+    <h2>Boats (${boats.filter(b => b.currentCustomerId === c.id).length})</h2>
+    ${boats.filter(b => b.currentCustomerId === c.id).map(b => `
+      <div style="padding:0.45rem 0;border-bottom:1px solid #ddd">
+        <strong>${b.name || "Boat"}</strong> · ${b.year || ""} ${b.brand || ""} ${b.model || ""}<br>
+        <span class="meta">${b.size || ""} · Hull: ${b.hullNumber || "—"} · Trailer: ${b.trailerStatus || "—"} · Loc: ${b.location || "—"}</span>
       </div>
-    `).join("") : "<p>No boats recorded yet.</p>"}
+    `).join("") || "<p>No boats attached.</p>"}
+  </div>
+  <div class="section">
+    <h2>Motors (${motors.filter(m => m.currentCustomerId === c.id).length})</h2>
+    ${motors.filter(m => m.currentCustomerId === c.id).map(m => `
+      <div style="padding:0.45rem 0;border-bottom:1px solid #ddd">
+        <strong>${m.brand || ""} ${m.model || ""}</strong> · ${m.hp || ""}hp · ${m.type || ""} · ${m.setup || "Single"}<br>
+        <span class="meta">Year: ${m.year || "—"} · SN: ${m.sn || "—"} · Prop: ${m.prop || "—"} · Boat: ${ (boats.find(b=>b.id===m.currentBoatId)||{}).name || "—" }</span>
+      </div>
+    `).join("") || "<p>No motors attached.</p>"}
   </div>
 
   <div class="section">
