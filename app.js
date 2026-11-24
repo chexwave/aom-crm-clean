@@ -401,6 +401,7 @@ function renderBoard() {
       <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem">
         <div style="flex:1;min-width:0">
           <div style="font-weight:800;font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${j.customerName || "—"}</div>
+          <div style="font-size:11px;font-weight:700;color:#002868;margin-top:0.05rem;letter-spacing:0.3px">${punchLabel(j)}</div>
           <div style="font-size:13px;color:#444;margin-top:0.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${j.boat || "No boat"} · ${j.motor || ""}</div>
           ${j.workGroups && j.workGroups.length ? `<div style="margin-top:0.2rem;font-size:12px;font-weight:700;color:#002868;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${j.workGroups.join(" · ")}</div>` : ""}
         </div>
@@ -423,6 +424,7 @@ function renderBoard() {
       return `<div class="nested-job" onclick="event.stopPropagation(); show('job','${j.id}')" style="border-left:4px solid ${color};padding:0.45rem 0.6rem;margin:0.15rem 0;background:#fafafa;border-radius:4px;cursor:pointer">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem">
           <div style="flex:1;min-width:0">
+            <div style="font-size:11px;font-weight:700;color:#002868;letter-spacing:0.3px">${punchLabel(j)}</div>
             <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${j.boat || "No boat"} · ${j.motor || ""}</div>
             ${j.workGroups && j.workGroups.length ? `<div style="font-size:11px;font-weight:700;color:#002868;margin-top:0.1rem">${j.workGroups.join(" · ")}</div>` : ""}
           </div>
@@ -452,6 +454,7 @@ function renderBoard() {
         <div style="flex:1;min-width:0">
           <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
           <div style="font-size:11px;font-weight:600;color:#444;margin-top:0.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${boatHint}</div>
+          <div style="font-size:10px;font-weight:700;color:#002868;margin-top:0.1rem;letter-spacing:0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${list.map(j => punchLabel(j)).slice(0, 3).join(" · ")}${list.length > 3 ? "…" : ""}</div>
         </div>
         <span style="display:flex;align-items:center;gap:0.3rem;flex-shrink:0">
           ${statusSummary}
