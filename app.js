@@ -363,10 +363,17 @@ if (!jobs.length) {
 try { mergeCatalog(); } catch(e) { console.warn("mergeCatalog skipped", e); }
 
 function setActiveNav(view) {
-  ["home","board","new","customers","parts"].forEach(v => {
+  ["home","company","board","archive","customers","parts"].forEach(v => {
     const el = document.getElementById("nav-" + v);
     if (el) el.classList.toggle("active", view === v);
   });
+}
+
+
+function toggleAddMenu() {
+  const m = document.getElementById("addMenu");
+  if (!m) return;
+  m.style.display = m.style.display === "none" ? "block" : "none";
 }
 
 function show(view, id) {
@@ -374,6 +381,8 @@ function show(view, id) {
   setActiveNav(view);
   const app = document.getElementById("app");
   if (view === "home") app.innerHTML = renderHome();
+  if (view === "company") app.innerHTML = renderCompany();
+  if (view === "archive") app.innerHTML = renderArchive();
   if (view === "board") app.innerHTML = renderBoard();
   if (view === "new") app.innerHTML = renderNew();
   if (view === "job") app.innerHTML = renderJob(id);
@@ -493,18 +502,74 @@ function renderHome() {
       <div style="flex:2;min-width:280px">
         <h3 style="margin:0 0 0.5rem;color:#002868;font-size:1.1rem;font-weight:800">Recent Open Jobs</h3>
         ${recentHtml}
-        <button class="btn" style="margin-top:0.5rem" onclick="show('board')">View All Open Jobs</button>
+        <button class="btn" style="margin-top:0.5rem" onclick="show('board')">View All Jobs</button>
       </div>
       <div style="flex:1;min-width:200px">
-        <h3 style="margin:0 0 0.5rem;color:#002868;font-size:1.1rem;font-weight:800">Quick Actions</h3>
-        <div style="display:flex;flex-direction:column;gap:0.4rem">
-          <button class="btn" onclick="show('new')">+ New Quote</button>
-          <button class="btn secondary" onclick="show('customers')">Customers</button>
-          <button class="btn secondary" onclick="show('parts')">Parts</button>
-          <button class="btn secondary" onclick="show('board')">Open Jobs Board</button>
+        <h3 style="margin:0 0 0.5rem;color:#002868;font-size:1.1rem;font-weight:800">Go To</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem">
+          <button class="btn" onclick="show('board')" style="padding:0.6rem 0.3rem;font-size:12px">Jobs</button>
+          <button class="btn secondary" onclick="show('company')" style="padding:0.6rem 0.3rem;font-size:12px">Company</button>
+          <button class="btn secondary" onclick="show('customers')" style="padding:0.6rem 0.3rem;font-size:12px">Customers</button>
+          <button class="btn secondary" onclick="show('parts')" style="padding:0.6rem 0.3rem;font-size:12px">Parts</button>
+          <button class="btn secondary" onclick="show('archive')" style="padding:0.6rem 0.3rem;font-size:12px">Archive</button>
+          <button class="btn secondary" onclick="show('new')" style="padding:0.6rem 0.3rem;font-size:12px">New Estimate</button>
         </div>
       </div>
     </div>
+  </div>`;
+}
+
+
+function renderCompany() {
+  const co = JSON.parse(localStorage.getItem("aom_company") || "{}");
+  return `
+  <div style="max-width:700px;margin:0 auto">
+    <h2 style="margin:0 0 0.8rem;color:#002868;font-weight:800">Company</h2>
+    <div style="background:#fff;border:2px solid #002868;border-radius:8px;padding:0.8rem;margin-bottom:1rem">
+      <div style="font-weight:800;margin-bottom:0.5rem">Document Header Info</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:14px">
+        <div><strong>Business Name</strong><br>${co.businessName || "American Outboard Motors"}</div>
+        <div><strong>Phone</strong><br>${co.phone || "—"}</div>
+        <div><strong>Email</strong><br>${co.email || "—"}</div>
+        <div><strong>Address</strong><br>${co.address || "12611 Ocean Gateway, Cordova, MD 21625"}</div>
+      </div>
+      <button class="btn" style="margin-top:0.6rem" onclick="editCompany()">Edit Company Info</button>
+    </div>
+    <h3 style="color:#002868;font-weight:800;margin:0 0 0.5rem">Admin</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem">
+      <button class="btn secondary" onclick="show('customers')">Customers</button>
+      <button class="btn secondary" onclick="show('parts')">Parts</button>
+      <button class="btn secondary" onclick="alert('Employees — coming with timesheet cut')">Employees</button>
+      <button class="btn secondary" onclick="alert('Timesheets — TimeChex link coming')">Timesheets</button>
+      <button class="btn secondary" onclick="show('archive')">Archive</button>
+      <button class="btn secondary" onclick="show('board')">Jobs</button>
+    </div>
+  </div>`;
+}
+
+function editCompany() {
+  const co = JSON.parse(localStorage.getItem("aom_company") || "{}");
+  const businessName = prompt("Business Name", co.businessName || "American Outboard Motors");
+  if (businessName === null) return;
+  const phone = prompt("Phone", co.phone || "");
+  const email = prompt("Email", co.email || "");
+  const address = prompt("Address", co.address || "12611 Ocean Gateway, Cordova, MD 21625");
+  localStorage.setItem("aom_company", JSON.stringify({ businessName, phone, email, address }));
+  show("company");
+}
+
+function renderArchive() {
+  const archivedJobs = jobs.filter(j => (j.status || "").startsWith("Done, Archived") || (j.status || "").includes("Archived"));
+  const jobRows = archivedJobs.map(j => `<tr onclick="show('job','${j.id}')" style="cursor:pointer"><td>${jobLabel(j)}</td><td>${j.customerName || "—"}</td><td>${j.boat || ""}</td><td>${j.status || ""}</td></tr>`).join("") || `<tr><td colspan="4" style="color:#666">No archived jobs yet.</td></tr>`;
+  return `
+  <div style="max-width:800px;margin:0 auto">
+    <h2 style="margin:0 0 0.8rem;color:#002868;font-weight:800">Archive</h2>
+    <h3 style="color:#002868;font-size:1rem;margin:0 0 0.4rem">Archived Jobs / Invoices</h3>
+    <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;margin-bottom:1rem">
+      <thead><tr style="background:#002868;color:#fff"><th style="text-align:left;padding:0.4rem">Job</th><th style="text-align:left;padding:0.4rem">Customer</th><th style="text-align:left;padding:0.4rem">Boat</th><th style="text-align:left;padding:0.4rem">Status</th></tr></thead>
+      <tbody>${jobRows}</tbody>
+    </table>
+    <p style="color:#666;font-size:13px">Customers and parts archive views will land with the next admin cut. Mark a job Done, Archived to see it here.</p>
   </div>`;
 }
 
@@ -621,7 +686,7 @@ function renderBoard() {
   return `
   <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start">
     <div style="flex:1;min-width:280px">
-      <h2 style="margin:0 0 0.5rem;color:#002868;font-size:1.4rem;font-weight:800">Open Jobs</h2>
+      <h2 style="margin:0 0 0.5rem;color:#002868;font-size:1.4rem;font-weight:800">Jobs</h2>
       <div class="filter-chips" style="margin-bottom:0.5rem">
         <button onclick="filterByStatusChip('')" class="active" data-filter="">All</button>
         <button onclick="filterByStatusChip('Needs Approval')" data-filter="Needs Approval">Needs Approval</button>
