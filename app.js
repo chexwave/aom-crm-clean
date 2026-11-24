@@ -1,5 +1,5 @@
 const RATES = { tech: 125, bench: 100, sea: 150 };
-const STATUSES = ["Needs Approval", "Needs Parts", "Needs Scheduled", "Active", "Needs Invoiced", "Done, Waiting Payment", "Done, Needs Picked Up", "Done, Archived"];
+const STATUSES = ["Estimate", "Quote", "Service Order", "Invoice", "Archive"];
 const WORK_GROUPS = ["Winterize", "Repair", "Service", "Sea Trial", "Clean", "Install", "Diagnose", "Oil Change"];
 
 const FOODS = ["nacho","pizza","taco","burger","sushi","waffle","donut","pretzel","bagel","chili","noodle","ramen","burrito","queso","pickle","olive","bacon","cheese","muffin","pancake"];
@@ -59,6 +59,21 @@ function nextJobNumber() {
   }).filter(n => n > 0);
   const next = nums.length ? Math.max(...nums) + 1 : 10001;
   return "J-" + next;
+}
+
+
+function displayPrefix(status) {
+  const s = status || "";
+  if (s.includes("Estimate") || s.includes("Needs Approval")) return "Estimate";
+  if (s.includes("Quote") || s.includes("Needs Parts")) return "Quote";
+  if (s.includes("Service Order") || s.includes("Needs Scheduled") || s.includes("Active")) return "Service Order";
+  if (s.includes("Invoice") || s.includes("Needs Invoiced") || s.includes("Waiting Payment") || s.includes("Picked Up")) return "Invoice";
+  if (s.includes("Archive") || s.includes("Archived")) return "Archive";
+  return "Estimate";
+}
+function displayJobNumber(j) {
+  const num = (j.jobNumber || "J-10000").replace(/^J-/, "");
+  return displayPrefix(j.status) + "-" + num;
 }
 
 function nextTempSN() {
@@ -395,11 +410,11 @@ function show(view, id) {
 }
 
 function punchLabel(j) {
-  return j.jobNumber || j.punchId || j.id.slice(-6);
+  return displayJobNumber(j) || j.punchId || j.id.slice(-6);
 }
 
 function jobLabel(j) {
-  return j.jobNumber || "—";
+  return displayJobNumber(j) || "—";
 }
 
 
