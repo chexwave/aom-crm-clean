@@ -389,15 +389,19 @@ function mergeCatalog() {
 }
 
 function resetSeed() {
-  if (confirm("Clear everything and reload the two example jobs + sample parts?")) {
+  if (confirm("Clear everything and reload example jobs, customers, boats, and motors?")) {
     localStorage.removeItem("aom_jobs");
     localStorage.removeItem("aom_customers");
+    localStorage.removeItem("aom_boats");
+    localStorage.removeItem("aom_motors");
     localStorage.removeItem("aom_parts");
     jobs = [];
     customers = [];
+    boats = [];
+    motors = [];
     parts = [];
     seedExamples();
-show('home');
+    show('home');
   }
 }
 
@@ -405,6 +409,11 @@ show('home');
 if (!jobs.length) {
   seedExamples();
 }
+// Ensure boat/motor profiles exist even if jobs already present
+if (boats.length === 0 || motors.length === 0) {
+  seedExamples();
+}
+
 try { mergeCatalog(); } catch(e) { console.warn("mergeCatalog skipped", e); }
 
 function setActiveNav(view) {
