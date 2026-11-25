@@ -446,6 +446,10 @@ function show(view, id) {
   if (view === "parts") app.innerHTML = renderParts();
   if (view === "part") app.innerHTML = renderPart(id);
   if (view === "newpart") app.innerHTML = renderNewPart();
+  if (view === "newboat") app.innerHTML = renderNewBoat(id);
+  if (view === "boat") app.innerHTML = renderBoat(id);
+  if (view === "newmotor") app.innerHTML = renderNewMotor(id);
+  if (view === "motor") app.innerHTML = renderMotor(id);
 }
 
 function punchLabel(j) {
@@ -1020,18 +1024,24 @@ function renderCustomer(id) {
   </div>
 
   <div class="section">
-    <h2>Boats (${boats.filter(b => b.currentCustomerId === c.id).length})</h2>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0">Boats (${boats.filter(b => b.currentCustomerId === c.id).length})</h2>
+      <button class="btn secondary" onclick="show('newboat','${c.id}')">+ Boat</button>
+    </div>
     ${boats.filter(b => b.currentCustomerId === c.id).map(b => `
-      <div style="padding:0.45rem 0;border-bottom:1px solid #ddd">
+      <div onclick="show('boat','${b.id}')" style="padding:0.45rem 0;border-bottom:1px solid #ddd;cursor:pointer">
         <strong>${b.name || "Boat"}</strong> · ${b.year || ""} ${b.brand || ""} ${b.model || ""}<br>
         <span class="meta">${b.size || ""} · Hull: ${b.hullNumber || "—"} · Trailer: ${b.trailerStatus || "—"} · Loc: ${b.location || "—"}</span>
       </div>
     `).join("") || "<p>No boats attached.</p>"}
   </div>
   <div class="section">
-    <h2>Motors (${motors.filter(m => m.currentCustomerId === c.id).length})</h2>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0">Motors (${motors.filter(m => m.currentCustomerId === c.id).length})</h2>
+      <button class="btn secondary" onclick="show('newmotor','${c.id}')">+ Motor</button>
+    </div>
     ${motors.filter(m => m.currentCustomerId === c.id).map(m => `
-      <div style="padding:0.45rem 0;border-bottom:1px solid #ddd">
+      <div onclick="show('motor','${m.id}')" style="padding:0.45rem 0;border-bottom:1px solid #ddd;cursor:pointer">
         <strong>${m.brand || ""} ${m.model || ""}</strong> · ${m.hp || ""}hp · ${m.type || ""} · ${m.setup || "Single"}<br>
         <span class="meta">Year: ${m.year || "—"} · SN: ${m.sn || "—"} · Prop: ${m.prop || "—"} · Boat: ${ (boats.find(b=>b.id===m.currentBoatId)||{}).name || "—" }</span>
       </div>
@@ -1673,3 +1683,172 @@ setTimeout(() => {
   }
 }, 400);
 
+
+function renderNewBoat(prefillCustomerId) {
+  const custOpts = customers.map(c => `<option value="${c.id}" ${c.id===prefillCustomerId?"selected":""}>${c.name}</option>`).join("");
+  return `
+  <h2>New Boat</h2>
+  <form onsubmit="saveBoat(event)">
+    <div class="form-grid">
+      <div><label>Name / Nickname *</label><input name="name" required placeholder="Scout 185"></div>
+      <div><label>Year</label><input name="year"></div>
+      <div><label>Brand</label><input name="brand"></div>
+      <div><label>Model</label><input name="model"></div>
+      <div><label>Size</label><input name="size" placeholder="18.5 ft"></div>
+      <div><label>Hull #</label><input name="hullNumber"></div>
+      <div><label>Trailer Status</label><input name="trailerStatus" placeholder="On trailer / In water"></div>
+      <div><label>Location</label><input name="location"></div>
+      <div style="grid-column:1/-1"><label>Notes</label><input name="notes"></div>
+      <div><label>Attach to Customer</label><select name="currentCustomerId"><option value="">— None —</option>${custOpts}</select></div>
+    </div>
+    <br>
+    <button class="btn" type="submit">Save Boat</button>
+    <button class="btn secondary" type="button" onclick="history.back()">Cancel</button>
+  </form>`;
+}
+
+function saveBoat(e, id) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = {
+    id: id || uid(),
+    name: fd.get("name") || "",
+    year: fd.get("year") || "",
+    brand: fd.get("brand") || "",
+    model: fd.get("model") || "",
+    size: fd.get("size") || "",
+    hullNumber: fd.get("hullNumber") || "",
+    trailerStatus: fd.get("trailerStatus") || "",
+    location: fd.get("location") || "",
+    notes: fd.get("notes") || "",
+    keysCode: "",
+    currentCustomerId: fd.get("currentCustomerId") || null,
+    history: []
+  };
+  if (id) {
+    const existing = boats.find(b => b.id === id);
+    if (existing) {
+      data.history = existing.history || [];
+      if (data.currentCustomerId && !data.history.includes(data.currentCustomerId)) data.history.push(data.currentCustomerId);
+      Object.assign(existing, data);
+    }
+  } else {
+    if (data.currentCustomerId) data.history = [data.currentCustomerId];
+    boats.push(data);
+  }
+  save();
+  if (data.currentCustomerId) show("customer", data.currentCustomerId);
+  else show("home");
+}
+
+function renderBoat(id) {
+  const b = boats.find(x => x.id === id);
+  if (!b) return show("home");
+  const custOpts = customers.map(c => `<option value="${c.id}" ${c.id===b.currentCustomerId?"selected":""}>${c.name}</option>`).join("");
+  return `
+  <h2>Edit Boat</h2>
+  <form onsubmit="saveBoat(event, '${b.id}')">
+    <div class="form-grid">
+      <div><label>Name / Nickname *</label><input name="name" value="${b.name||""}" required></div>
+      <div><label>Year</label><input name="year" value="${b.year||""}"></div>
+      <div><label>Brand</label><input name="brand" value="${b.brand||""}"></div>
+      <div><label>Model</label><input name="model" value="${b.model||""}"></div>
+      <div><label>Size</label><input name="size" value="${b.size||""}"></div>
+      <div><label>Hull #</label><input name="hullNumber" value="${b.hullNumber||""}"></div>
+      <div><label>Trailer Status</label><input name="trailerStatus" value="${b.trailerStatus||""}"></div>
+      <div><label>Location</label><input name="location" value="${b.location||""}"></div>
+      <div style="grid-column:1/-1"><label>Notes</label><input name="notes" value="${b.notes||""}"></div>
+      <div><label>Attach to Customer</label><select name="currentCustomerId"><option value="">— None —</option>${custOpts}</select></div>
+    </div>
+    <br>
+    <button class="btn" type="submit">Save Changes</button>
+    <button class="btn secondary" type="button" onclick="show('customer','${b.currentCustomerId||""}')">Cancel</button>
+  </form>`;
+}
+
+function renderNewMotor(prefillCustomerId) {
+  const custOpts = customers.map(c => `<option value="${c.id}" ${c.id===prefillCustomerId?"selected":""}>${c.name}</option>`).join("");
+  const boatOpts = boats.map(b => `<option value="${b.id}">${b.name}</option>`).join("");
+  return `
+  <h2>New Motor</h2>
+  <form onsubmit="saveMotor(event)">
+    <div class="form-grid">
+      <div><label>Brand *</label><input name="brand" required placeholder="Yamaha"></div>
+      <div><label>Model</label><input name="model" placeholder="F115"></div>
+      <div><label>Year</label><input name="year"></div>
+      <div><label>HP</label><input name="hp" type="number"></div>
+      <div><label>Type</label><input name="type" placeholder="Outboard / IO"></div>
+      <div><label>Setup</label><input name="setup" placeholder="Single / Twin"></div>
+      <div><label>Prop</label><input name="prop" placeholder="RH / LH"></div>
+      <div><label>SN</label><input name="sn"></div>
+      <div style="grid-column:1/-1"><label>Notes</label><input name="notes"></div>
+      <div><label>Attach to Customer</label><select name="currentCustomerId"><option value="">— None —</option>${custOpts}</select></div>
+      <div><label>On Boat</label><select name="currentBoatId"><option value="">— None —</option>${boatOpts}</select></div>
+    </div>
+    <br>
+    <button class="btn" type="submit">Save Motor</button>
+    <button class="btn secondary" type="button" onclick="history.back()">Cancel</button>
+  </form>`;
+}
+
+function saveMotor(e, id) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = {
+    id: id || uid(),
+    brand: fd.get("brand") || "",
+    model: fd.get("model") || "",
+    year: fd.get("year") || "",
+    hp: fd.get("hp") || "",
+    type: fd.get("type") || "",
+    setup: fd.get("setup") || "Single",
+    prop: fd.get("prop") || "",
+    sn: fd.get("sn") || "",
+    family: "",
+    notes: fd.get("notes") || "",
+    currentCustomerId: fd.get("currentCustomerId") || null,
+    currentBoatId: fd.get("currentBoatId") || null,
+    history: []
+  };
+  if (id) {
+    const existing = motors.find(m => m.id === id);
+    if (existing) {
+      data.history = existing.history || [];
+      if (data.currentCustomerId && !data.history.includes(data.currentCustomerId)) data.history.push(data.currentCustomerId);
+      Object.assign(existing, data);
+    }
+  } else {
+    if (data.currentCustomerId) data.history = [data.currentCustomerId];
+    motors.push(data);
+  }
+  save();
+  if (data.currentCustomerId) show("customer", data.currentCustomerId);
+  else show("home");
+}
+
+function renderMotor(id) {
+  const m = motors.find(x => x.id === id);
+  if (!m) return show("home");
+  const custOpts = customers.map(c => `<option value="${c.id}" ${c.id===m.currentCustomerId?"selected":""}>${c.name}</option>`).join("");
+  const boatOpts = boats.map(b => `<option value="${b.id}" ${b.id===m.currentBoatId?"selected":""}>${b.name}</option>`).join("");
+  return `
+  <h2>Edit Motor</h2>
+  <form onsubmit="saveMotor(event, '${m.id}')">
+    <div class="form-grid">
+      <div><label>Brand *</label><input name="brand" value="${m.brand||""}" required></div>
+      <div><label>Model</label><input name="model" value="${m.model||""}"></div>
+      <div><label>Year</label><input name="year" value="${m.year||""}"></div>
+      <div><label>HP</label><input name="hp" type="number" value="${m.hp||""}"></div>
+      <div><label>Type</label><input name="type" value="${m.type||""}"></div>
+      <div><label>Setup</label><input name="setup" value="${m.setup||""}"></div>
+      <div><label>Prop</label><input name="prop" value="${m.prop||""}"></div>
+      <div><label>SN</label><input name="sn" value="${m.sn||""}"></div>
+      <div style="grid-column:1/-1"><label>Notes</label><input name="notes" value="${m.notes||""}"></div>
+      <div><label>Attach to Customer</label><select name="currentCustomerId"><option value="">— None —</option>${custOpts}</select></div>
+      <div><label>On Boat</label><select name="currentBoatId"><option value="">— None —</option>${boatOpts}</select></div>
+    </div>
+    <br>
+    <button class="btn" type="submit">Save Changes</button>
+    <button class="btn secondary" type="button" onclick="show('customer','${m.currentCustomerId||""}')">Cancel</button>
+  </form>`;
+}
