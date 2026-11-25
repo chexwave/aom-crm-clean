@@ -1789,7 +1789,7 @@ function renderNewBoat(prefillCustomerId) {
     </div>
     <br>
     <button class="btn" type="submit">Save Boat</button>
-    <button class="btn secondary" type="button" onclick="history.back()">Cancel</button>
+    <button class="btn secondary" type="button" onclick="${prefillCustomerId ? `show('customer','${prefillCustomerId}')` : `show('customers')`}">Cancel</button>
   </form>`;
 }
 
@@ -1848,7 +1848,7 @@ function renderBoat(id) {
     </div>
     <br>
     <button class="btn" type="submit">Save Changes</button>
-    <button class="btn secondary" type="button" onclick="show('customer','${b.currentCustomerId||""}')">Cancel</button>
+    <button class="btn secondary" type="button" onclick="${b.currentCustomerId ? `show('customer','${b.currentCustomerId}')` : `show('customers')`}">Cancel</button>
     <button class="btn secondary" type="button" style="color:#c00" onclick="deleteBoat('${b.id}')">Delete Boat</button>
   </form>`;
 }
@@ -1874,7 +1874,7 @@ function renderNewMotor(prefillCustomerId) {
     </div>
     <br>
     <button class="btn" type="submit">Save Motor</button>
-    <button class="btn secondary" type="button" onclick="history.back()">Cancel</button>
+    <button class="btn secondary" type="button" onclick="${prefillCustomerId ? `show('customer','${prefillCustomerId}')` : `show('customers')`}">Cancel</button>
   </form>`;
 }
 
@@ -1936,7 +1936,7 @@ function renderMotor(id) {
     </div>
     <br>
     <button class="btn" type="submit">Save Changes</button>
-    <button class="btn secondary" type="button" onclick="show('customer','${m.currentCustomerId||""}')">Cancel</button>
+    <button class="btn secondary" type="button" onclick="${m.currentCustomerId ? `show('customer','${m.currentCustomerId}')` : `show('customers')`}">Cancel</button>
     <button class="btn secondary" type="button" style="color:#c00" onclick="deleteMotor('${m.id}')">Delete Motor</button>
   </form>`;
 }
