@@ -122,7 +122,9 @@ function seedExamples() {
   const c4 = { id: "c-brooks", customerNumber: "C-10004", name: "Taylor Brooks", phone: "410-555-0199", email: "taylor.brooks@example.com", address: "" };
   const c5 = { id: "c-ellis", customerNumber: "C-10005", name: "Morgan Ellis", phone: "410-555-0177", email: "morgan.ellis@example.com", address: "" };
   const c6 = { id: "c-quinn", customerNumber: "C-10006", name: "Riley Quinn", phone: "410-555-0133", email: "riley.quinn@example.com", address: "" };
-  customers = [c1, c2, c3, c4, c5, c6];
+  if (customers.length === 0) {
+    customers = [c1, c2, c3, c4, c5, c6];
+  }
 
   // Mock Boat + Motor profiles (additive)
   if (boats.length === 0) {
@@ -148,6 +150,7 @@ function seedExamples() {
   }
 
 
+  if (parts.length === 0) {
   parts = [
     { id: "p1", brand: "LiquiMoly", category: "Motor Oil", productName: "10W-40", qtySize: "1.06 Qt (1 L)", sku: "LOM 20506", upc: "4100420205064", description: "Marine 4 Stroke Motor Oil SAE 10W-40", price: 13.99, qtyOnHand: 0 },
     { id: "p2", brand: "Yamaha", category: "Filter", productName: "Fuel Filter", qtySize: "1", sku: "18-7844", upc: "", description: "Fuel filter (Sierra)", price: 0, qtyOnHand: 0 },
@@ -169,7 +172,8 @@ function seedExamples() {
     { id: "p18", brand: "LiquiMoly", category: "Gear Oil", productName: "75W-90", qtySize: "1.06 Qt (1 L)", sku: "LOM 20538", upc: "", description: "Marine Fully Synthetic Gear Oil GL4/GL5 SAE 75W-90", price: 32.97, qtyOnHand: 0 },
     { id: "p19", brand: "LiquiMoly", category: "Motor Oil", productName: "25W-40", qtySize: "1.06 Qt (1 L)", sku: "LOM 20546", upc: "", description: "Marine 4 Stroke Motor Oil SAE 25W-40 Synthetic Blend", price: 15.49, qtyOnHand: 0 },
     { id: "p20", brand: "LiquiMoly", category: "Motor Oil", productName: "PWC 10W-40", qtySize: "1.06 Qt (1 L)", sku: "LOM 20528", upc: "", description: "Marine PWC Oil SAE 10W-40", price: 15.99, qtyOnHand: 0 }
-  ];
+  ]
+  };
 
   if (needsJobs) {
   jobs = [
@@ -988,15 +992,10 @@ function renderCustomer(id) {
   const c = customers.find(x => x.id === id);
   if (!c) return show("customers");
   const relatedJobs = jobs.filter(j => j.customerId === c.id);
-  const boats = [];
-  const seen = new Set();
-  relatedJobs.forEach(j => {
-    const key = `${j.boat||""}|${j.motor||""}|${j.year||""}|${j.sn||""}`;
-    if (!seen.has(key) && (j.boat || j.motor)) {
-      seen.add(key);
-      boats.push({ boat: j.boat, motor: j.motor, year: j.year, sn: j.sn, family: j.family, received: j.received });
-    }
-  });
+  const attachedBoats = boats.filter(b => b.currentCustomerId === c.id);
+  const attachedMotors = motors.filter(m => m.currentCustomerId === c.id);
+  const unattachedBoats = boats.filter(b => !b.currentCustomerId);
+  const unattachedMotors = motors.filter(m => !m.currentCustomerId);
 
   return `
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem">
@@ -1025,27 +1024,44 @@ function renderCustomer(id) {
 
   <div class="section">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <h2 style="margin:0">Boats (${boats.filter(b => b.currentCustomerId === c.id).length})</h2>
+      <h2 style="margin:0">Boats (${attachedBoats.length})</h2>
       <button class="btn secondary" onclick="show('newboat','${c.id}')">+ Boat</button>
     </div>
-    ${boats.filter(b => b.currentCustomerId === c.id).map(b => `
-      <div onclick="show('boat','${b.id}')" style="padding:0.45rem 0;border-bottom:1px solid #ddd;cursor:pointer">
-        <strong>${b.name || "Boat"}</strong> · ${b.year || ""} ${b.brand || ""} ${b.model || ""}<br>
-        <span class="meta">${b.size || ""} · Hull: ${b.hullNumber || "—"} · Trailer: ${b.trailerStatus || "—"} · Loc: ${b.location || "—"}</span>
+    ${attachedBoats.map(b => `
+      <div style="padding:0.45rem 0;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center">
+        <div onclick="show('boat','${b.id}')" style="cursor:pointer;flex:1">
+          <strong>${b.name || "Boat"}</strong> · ${b.year || ""} ${b.brand || ""} ${b.model || ""}<br>
+          <span class="meta">${b.size || ""} · Hull: ${b.hullNumber || "—"} · Trailer: ${b.trailerStatus || "—"} · Loc: ${b.location || "—"}</span>
+        </div>
+        <div>
+          <button class="btn secondary" style="padding:0.2rem 0.4rem;font-size:11px" onclick="detachBoat('${b.id}')">Detach</button>
+          <button class="btn secondary" style="padding:0.2rem 0.4rem;font-size:11px;color:#c00" onclick="deleteBoat('${b.id}')">Delete</button>
+        </div>
       </div>
     `).join("") || "<p>No boats attached.</p>"}
+    ${unattachedBoats.length ? `<p style="margin-top:0.5rem;font-size:12px;color:#666">Unattached boats available: ${unattachedBoats.map(b => `<a href="#" onclick="attachBoat('${b.id}','${c.id}');return false">${b.name}</a>`).join(", ")}</p>` : ""}
   </div>
   <div class="section">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <h2 style="margin:0">Motors (${motors.filter(m => m.currentCustomerId === c.id).length})</h2>
+      <h2 style="margin:0">Motors (${attachedMotors.length})</h2>
       <button class="btn secondary" onclick="show('newmotor','${c.id}')">+ Motor</button>
     </div>
-    ${motors.filter(m => m.currentCustomerId === c.id).map(m => `
-      <div onclick="show('motor','${m.id}')" style="padding:0.45rem 0;border-bottom:1px solid #ddd;cursor:pointer">
-        <strong>${m.brand || ""} ${m.model || ""}</strong> · ${m.hp || ""}hp · ${m.type || ""} · ${m.setup || "Single"}<br>
-        <span class="meta">Year: ${m.year || "—"} · SN: ${m.sn || "—"} · Prop: ${m.prop || "—"} · Boat: ${ (boats.find(b=>b.id===m.currentBoatId)||{}).name || "—" }</span>
+    ${attachedMotors.map(m => `
+      <div style="padding:0.45rem 0;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center">
+        <div onclick="show('motor','${m.id}')" style="cursor:pointer;flex:1">
+          <strong>${m.brand || ""} ${m.model || ""}</strong> · ${m.hp || ""}hp · ${m.type || ""} · ${m.setup || "Single"}
+          ${m.sn && m.sn.startsWith("AOM-TEMP") ? " <span style='color:#c60;font-size:11px'>(temp SN)</span>" : ""}
+          ${motors.filter(x => x.sn && x.sn.toLowerCase() === (m.sn||"").toLowerCase() && x.id !== m.id).length ? " <span style='color:#c00;font-size:11px'>(SN match)</span>" : ""}
+          <br>
+          <span class="meta">Year: ${m.year || "—"} · SN: ${m.sn || "—"} · Prop: ${m.prop || "—"} · Boat: ${(boats.find(b=>b.id===m.currentBoatId)||{}).name || "—"}</span>
+        </div>
+        <div>
+          <button class="btn secondary" style="padding:0.2rem 0.4rem;font-size:11px" onclick="detachMotor('${m.id}')">Detach</button>
+          <button class="btn secondary" style="padding:0.2rem 0.4rem;font-size:11px;color:#c00" onclick="deleteMotor('${m.id}')">Delete</button>
+        </div>
       </div>
     `).join("") || "<p>No motors attached.</p>"}
+    ${unattachedMotors.length ? `<p style="margin-top:0.5rem;font-size:12px;color:#666">Unattached motors available: ${unattachedMotors.map(m => `<a href="#" onclick="attachMotor('${m.id}','${c.id}');return false">${m.brand} ${m.model}</a>`).join(", ")}</p>` : ""}
   </div>
 
   <div class="section">
@@ -1684,6 +1700,76 @@ setTimeout(() => {
 }, 400);
 
 
+function nextTempMotorSN() {
+  const nums = motors.map(m => {
+    const match = (m.sn || "").match(/AOM-TEMP-(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+  }).filter(n => n > 0);
+  const next = nums.length ? Math.max(...nums) + 1 : 10001;
+  return "AOM-TEMP-" + next;
+}
+
+function checkMotorSNUniqueness(sn, excludeId) {
+  if (!sn) return [];
+  return motors.filter(m => m.id !== excludeId && (m.sn || "").toLowerCase() === sn.toLowerCase());
+}
+
+function detachBoat(id) {
+  const b = boats.find(x => x.id === id);
+  if (!b) return;
+  b.currentCustomerId = null;
+  save();
+  show("customer", b.history && b.history[0] ? b.history[0] : "customers");
+}
+
+function detachMotor(id) {
+  const m = motors.find(x => x.id === id);
+  if (!m) return;
+  m.currentCustomerId = null;
+  save();
+  show("customer", m.history && m.history[0] ? m.history[0] : "customers");
+}
+
+function attachBoat(boatId, customerId) {
+  const b = boats.find(x => x.id === boatId);
+  if (!b) return;
+  b.currentCustomerId = customerId;
+  if (!b.history) b.history = [];
+  if (!b.history.includes(customerId)) b.history.push(customerId);
+  save();
+  show("customer", customerId);
+}
+
+function attachMotor(motorId, customerId) {
+  const m = motors.find(x => x.id === motorId);
+  if (!m) return;
+  m.currentCustomerId = customerId;
+  if (!m.history) m.history = [];
+  if (!m.history.includes(customerId)) m.history.push(customerId);
+  save();
+  show("customer", customerId);
+}
+
+function deleteBoat(id) {
+  if (!confirm("Delete this boat profile? History on jobs will remain as text. This cannot be undone.")) return;
+  const idx = boats.findIndex(b => b.id === id);
+  if (idx === -1) return;
+  const b = boats[idx];
+  boats.splice(idx, 1);
+  save();
+  show("customer", b.currentCustomerId || "customers");
+}
+
+function deleteMotor(id) {
+  if (!confirm("Delete this motor profile? History on jobs will remain as text. This cannot be undone.")) return;
+  const idx = motors.findIndex(m => m.id === id);
+  if (idx === -1) return;
+  const m = motors[idx];
+  motors.splice(idx, 1);
+  save();
+  show("customer", m.currentCustomerId || "customers");
+}
+
 function renderNewBoat(prefillCustomerId) {
   const custOpts = customers.map(c => `<option value="${c.id}" ${c.id===prefillCustomerId?"selected":""}>${c.name}</option>`).join("");
   return `
@@ -1763,6 +1849,7 @@ function renderBoat(id) {
     <br>
     <button class="btn" type="submit">Save Changes</button>
     <button class="btn secondary" type="button" onclick="show('customer','${b.currentCustomerId||""}')">Cancel</button>
+    <button class="btn secondary" type="button" style="color:#c00" onclick="deleteBoat('${b.id}')">Delete Boat</button>
   </form>`;
 }
 
@@ -1803,7 +1890,7 @@ function saveMotor(e, id) {
     type: fd.get("type") || "",
     setup: fd.get("setup") || "Single",
     prop: fd.get("prop") || "",
-    sn: fd.get("sn") || "",
+    sn: (fd.get("sn") || "").trim() || nextTempMotorSN(),
     family: "",
     notes: fd.get("notes") || "",
     currentCustomerId: fd.get("currentCustomerId") || null,
@@ -1850,5 +1937,6 @@ function renderMotor(id) {
     <br>
     <button class="btn" type="submit">Save Changes</button>
     <button class="btn secondary" type="button" onclick="show('customer','${m.currentCustomerId||""}')">Cancel</button>
+    <button class="btn secondary" type="button" style="color:#c00" onclick="deleteMotor('${m.id}')">Delete Motor</button>
   </form>`;
 }
