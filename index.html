@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>American Outboard Motors — CRM Core</title>
-  <link rel="stylesheet" href="styles.css?v=menucats1">
+  <link rel="stylesheet" href="styles.css?v=quickhome1">
 </head>
 <body>
 <header>
-  <h1>American Outboard <span>CRM</span> <span id="appVersion" style="font-size:0.75rem;font-weight:600;color:#fff;opacity:0.85;margin-left:0.5rem">v2.8</span></h1>
+  <h1>American Outboard <span>CRM</span> <span id="appVersion" style="font-size:0.75rem;font-weight:600;color:#fff;opacity:0.85;margin-left:0.5rem">v2.9</span></h1>
   <div class="header-search">
     <input type="text" id="globalSearch" placeholder="Search customers, parts, jobs..." onkeyup="handleGlobalSearch(this.value)">
   </div>
@@ -53,13 +53,14 @@
   <button class="btn" style="display:block;width:100%;background:#fff;color:#002868;border:none" onclick="show('newmotor');toggleAddMenu()">New Motor</button>
 </div>
 
-<script src="app.js?v=menucats1"></script>
+<script src="app.js?v=quickhome1"></script>
 <script>
 function toggleCategory(id) {
   const el = document.getElementById('cat-' + id);
   if (!el) return;
   el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
+
 function handleGlobalSearch(q) {
   if (!q || q.length < 2) return;
   const lower = q.toLowerCase();
@@ -68,6 +69,47 @@ function handleGlobalSearch(q) {
   const part = (typeof parts !== 'undefined') && parts.find(p => (p.productName || p.sku || p.description || '').toLowerCase().includes(lower));
   if (part) { show('part', part.id); return; }
   show('customers');
+}
+
+// Patch active state for sidebar
+const originalSetActiveNav = window.setActiveNav;
+window.setActiveNav = function(view) {
+  if (typeof originalSetActiveNav === 'function') originalSetActiveNav(view);
+  ['home','board','customers','parts'].forEach(v => {
+    const el = document.getElementById('side-' + v);
+    if (el) el.classList.toggle('active', view === v);
+  });
+};
+
+// Inject quick actions on Home
+const originalShow = window.show;
+window.show = function(view, id) {
+  if (typeof originalShow === 'function') originalShow(view, id);
+  if (view === 'home') {
+    setTimeout(injectQuickActions, 50);
+  }
+};
+
+function injectQuickActions() {
+  const app = document.getElementById('app');
+  if (!app || document.getElementById('quickActions')) return;
+  const qa = document.createElement('div');
+  qa.id = 'quickActions';
+  qa.style.cssText = 'display:flex;gap:0.6rem;flex-wrap:wrap;margin:0.8rem 0 1.2rem;';
+  qa.innerHTML = `
+    <button class="btn" onclick="alert('Timesheet summary coming')" style="flex:1;min-width:140px;padding:0.7rem">My Hours</button>
+    <button class="btn" onclick="show('parts')" style="flex:1;min-width:140px;padding:0.7rem">Find Part</button>
+    <button class="btn" onclick="show('customers')" style="flex:1;min-width:140px;padding:0.7rem">Customers</button>
+    <button class="btn" onclick="show('new')" style="flex:1;min-width:140px;padding:0.7rem">New Estimate</button>
+  `;
+  // Insert after the first heading or at top of app content
+  const first = app.querySelector('h1, h2, .section, div');
+  if (first) first.after(qa); else app.prepend(qa);
+}
+
+// Initial call if already on home
+if (document.getElementById('app') && document.getElementById('app').innerHTML) {
+  setTimeout(() => { if (currentView === 'home') injectQuickActions(); }, 100);
 }
 </script>
 </body>
