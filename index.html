@@ -4,12 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>American Outboard Motors — CRM Core</title>
-  <link rel="stylesheet" href="styles.css?v=collapsible1">
+  <link rel="stylesheet" href="styles.css?v=menucats1">
 </head>
 <body>
 <header>
-  <button id="sidebarToggle" class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
-  <h1>American Outboard <span>CRM</span> <span id="appVersion" style="font-size:0.75rem;font-weight:600;color:#fff;opacity:0.85;margin-left:0.5rem">v2.7</span></h1>
+  <h1>American Outboard <span>CRM</span> <span id="appVersion" style="font-size:0.75rem;font-weight:600;color:#fff;opacity:0.85;margin-left:0.5rem">v2.8</span></h1>
   <div class="header-search">
     <input type="text" id="globalSearch" placeholder="Search customers, parts, jobs..." onkeyup="handleGlobalSearch(this.value)">
   </div>
@@ -19,17 +18,20 @@
   </nav>
 </header>
 
-<aside class="sidebar collapsed" id="sidebar">
-  <button id="side-home" onclick="show('home')" title="Home">Home</button>
-  <button id="side-board" onclick="show('board')" title="Jobs">Jobs</button>
-  <button id="side-customers" onclick="show('customers')" title="Customers">Customers</button>
-  <button id="side-parts" onclick="show('parts')" title="Parts">Parts</button>
-  <button id="side-more" onclick="toggleMoreMenu()" title="More">More</button>
-  <div id="moreMenu" class="more-menu" style="display:none">
-    <button onclick="show('company'); toggleMoreMenu()">Company</button>
-    <button onclick="show('archive'); toggleMoreMenu()">Archive</button>
-    <button onclick="alert('Timesheet coming')">Timesheet</button>
-    <button onclick="alert('Calendar coming')">Calendar</button>
+<aside class="sidebar" id="sidebar">
+  <button id="side-home" class="nav-item" onclick="show('home')">Home</button>
+  <button id="side-board" class="nav-item" onclick="show('board')">Jobs</button>
+  <button id="side-customers" class="nav-item" onclick="show('customers')">Customers</button>
+  <button id="side-parts" class="nav-item" onclick="show('parts')">Parts</button>
+
+  <div class="nav-category">
+    <button class="nav-category-toggle" onclick="toggleCategory('more')">More ▼</button>
+    <div id="cat-more" class="nav-submenu" style="display:none">
+      <button onclick="show('company')">Company</button>
+      <button onclick="show('archive')">Archive</button>
+      <button onclick="alert('Timesheet coming')">Timesheet</button>
+      <button onclick="alert('Calendar coming')">Calendar</button>
+    </div>
   </div>
 </aside>
 
@@ -51,16 +53,12 @@
   <button class="btn" style="display:block;width:100%;background:#fff;color:#002868;border:none" onclick="show('newmotor');toggleAddMenu()">New Motor</button>
 </div>
 
-<script src="app.js?v=collapsible1"></script>
+<script src="app.js?v=menucats1"></script>
 <script>
-function toggleMoreMenu() {
-  const m = document.getElementById('moreMenu');
-  m.style.display = m.style.display === 'none' ? 'block' : 'none';
-}
-function toggleSidebar() {
-  const sb = document.getElementById('sidebar');
-  sb.classList.toggle('collapsed');
-  document.body.classList.toggle('sidebar-collapsed');
+function toggleCategory(id) {
+  const el = document.getElementById('cat-' + id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 function handleGlobalSearch(q) {
   if (!q || q.length < 2) return;
